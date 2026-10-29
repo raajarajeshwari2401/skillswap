@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Matching Recommendations - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <h1>Peer Mentor Matching AI</h1>
+      <p>Multi-attribute compatibility engine utilizing functional programming and parallel worker pools.</p>
+    </div>
+    <a href="{{ url_for('skills.create_request') }}" class="btn btn-outline btn-sm">+ Post Another Request</a>
+  </div>
+
+  {% if user_requests %}
+    <!-- Request Selector Tabs -->
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;">
+      {% for req in user_requests %}
+        <a 
+          href="{{ url_for('matching.recommendations', request_id=req.id) }}" 
+          class="btn btn-sm {% if selected_request and selected_request.id == req.id %}btn-primary{% else %}btn-secondary{% endif %}"
+          style="white-space: nowrap;"
+        >
+          📌 {{ req.title[:35] }}{% if req.title|length > 35 %}...{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+
+    <!-- Active Target Request Details -->
+    {% if selected_request %}
+      <div class="card" style="margin-bottom: 2rem; background: #eef2ff; border: 1px solid #c7d2fe;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: var(--primary);">Currently Matching For</div>
+            <h3 style="font-size: 1.25rem; color: #1e1b4b; margin: 0.25rem 0;">{{ selected_request.title }}</h3>
+            <div style="font-size: 0.85rem; color: #4338ca;">
+              Category: {{ selected_request.category.name }} • Level: {{ selected_request.desired_level | capitalize }} • Budget: {{ selected_request.budget_points }} pts
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <span class="badge badge-primary">{{ meta.execution_mode or ('Multiprocessing (' ~ meta.worker_pids|length ~ ' Workers)') }}</span>
+            {% if meta.execution_time_ms %}
+              <div style="font-size: 0.75rem; color: #4338ca; margin-top: 4px;">Computed in {{ meta.execution_time_ms }} ms</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Ranked Matches Results -->
+    {% if matches %}
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        {% for match in matches %}
+          <div class="card" style="display: grid; grid-template-columns: 80px 1fr 200px; gap: 1.5rem; align-items: center;">
+            <!-- Compatibility Circle Score -->
+            <div style="text-align: center;">
+              <div class="match-score-badge">
+                {{ match.compatibility_score }}%
+              </div>
+              <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; margin-top: 4px; text-transform: uppercase;">Match</div>
+            </div>
+
+            <!-- Match Details & Explainability Reasons -->
+            <div>
+              <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem;">
+                <span class="badge badge-primary">{{ match.offer.category.name }}</span>
+                <span class="badge {{ match.offer.proficiency_level | badge_class }}">{{ match.offer.difficulty }}</span>
+              </div>
+              <h3 style="font-size: 1.2rem; margin-bottom: 0.35rem;">
+                <a href="{{ url_for('skills.detail', offer_id=match.offer.id) }}">{{ match.offer.title }}</a>
+              </h3>
+              
+              <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                Instructor: <strong>{{ match.offer.user.full_name }}</strong> 
+                (⭐ {{ match.offer.user.get_average_rating() }}) • 
+                Duration: {{ match.offer.duration_minutes }}m • 
+                Mode: {{ match.offer.interaction_mode | capitalize }}
+              </div>
+
+              <!-- Match Reason Chips -->
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                {% for reason in match.reasons %}
+                  <span style="background: #f1f5f9; color: #334155; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: var(--radius-full); border: 1px solid #cbd5e1;">
+                    ✓ {{ reason }}
+                  </span>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Cost & Action Button -->
+            <div style="text-align: right; border-left: 1px solid var(--border-color); padding-left: 1.5rem;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Cost</div>
+              <div style="font-size: 1.75rem; font-weight: 900; color: var(--primary); margin-bottom: 0.75rem;">
+                {{ match.offer.suggested_points }} pts
+              </div>
+              <a href="{{ url_for('skills.detail', offer_id=match.offer.id) }}" class="btn btn-primary btn-sm" style="width: 100%;">
+                Request Session &rarr;
+              </a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card" style="text-align: center; padding: 3rem;">
+        <h3>No matching listings yet</h3>
+        <p style="margin: 0.5rem 0 1.5rem;">There are currently no active skill offers in this topic area.</p>
+        <a href="{{ url_for('skills.explore') }}" class="btn btn-secondary">Explore All Skills</a>
+      </div>
+    {% endif %}
+
+  {% else %}
+    <div class="card" style="text-align: center; padding: 3rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">🎯</div>
+      <h2>No Skill Requests Found</h2>
+      <p style="max-width: 500px; margin: 0.5rem auto 1.5rem;">
+        To receive intelligent recommendations and compatibility scoring, tell us what you'd like to learn.
+      </p>
+      <a href="{{ url_for('skills.create_request') }}" class="btn btn-primary">+ Post a Learning Request</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

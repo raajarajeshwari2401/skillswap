@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 500px; text-align: center; padding: 5rem 1rem;">
+  <div style="font-size: 4rem; font-weight: 900; color: var(--primary);">404</div>
+  <h2 style="margin: 0.5rem 0 1rem;">Page Not Found</h2>
+  <p style="margin-bottom: 2rem;">The page or skill listing you are looking for does not exist or has been moved.</p>
+  <a href="{{ url_for('main.index') }}" class="btn btn-primary">Return Home</a>
+</div>
+{% endblock %}

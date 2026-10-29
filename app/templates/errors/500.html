@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 500px; text-align: center; padding: 5rem 1rem;">
+  <div style="font-size: 4rem; font-weight: 900; color: var(--danger);">500</div>
+  <h2 style="margin: 0.5rem 0 1rem;">Internal System Error</h2>
+  <p style="margin-bottom: 2rem;">Our servers encountered an unexpected condition. Database state was rolled back safely.</p>
+  <a href="{{ url_for('main.index') }}" class="btn btn-primary">Return to Homepage</a>
+</div>
+{% endblock %}

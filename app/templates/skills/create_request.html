@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Request a Skill - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 700px; padding-top: 2.5rem; padding-bottom: 4rem;">
+  
+  <div style="margin-bottom: 2rem; text-align: center;">
+    <h1>Request a Skill from Classmates</h1>
+    <p>Post what you want to learn. Our recommendation engine will rank the best peer mentors for you.</p>
+  </div>
+
+  <div class="card" style="padding: 2.5rem;">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-group">
+        <label class="form-label" for="title">What do you want to learn?</label>
+        <input 
+          type="text" 
+          id="title" 
+          name="title" 
+          class="form-control" 
+          placeholder="e.g. Need help with Data Structures & Algorithms (Trees & Graphs)" 
+          required 
+          autofocus
+        >
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="category_id">Academic Category</label>
+          <select id="category_id" name="category_id" class="form-control" required>
+            {% for cat in categories %}
+              <option value="{{ cat.id }}">{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="desired_level">Desired Learning Level</label>
+          <select id="desired_level" name="desired_level" class="form-control" required>
+            <option value="beginner">Beginner (Foundations & Intro)</option>
+            <option value="intermediate" selected>Intermediate (Coursework / Homework)</option>
+            <option value="advanced">Advanced (Complex Projects / Research)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="preferred_duration_minutes">Preferred Duration (Minutes)</label>
+          <input 
+            type="number" 
+            id="preferred_duration_minutes" 
+            name="preferred_duration_minutes" 
+            class="form-control" 
+            min="30" 
+            max="180" 
+            step="15" 
+            value="60" 
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="interaction_mode">Interaction Mode</label>
+          <select id="interaction_mode" name="interaction_mode" class="form-control" required>
+            <option value="hybrid" selected>Hybrid (Either online or in person)</option>
+            <option value="online">Online (Video Call)</option>
+            <option value="offline">In-Person (Campus Study Area)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="budget_points">Maximum Points Budget</label>
+        <input 
+          type="number" 
+          id="budget_points" 
+          name="budget_points" 
+          class="form-control" 
+          min="10" 
+          max="{{ current_user.wallet.available_balance }}" 
+          step="5" 
+          value="30" 
+          required
+        >
+        <div class="form-hint">
+          Your available balance is <strong>{{ current_user.wallet.available_balance }} points</strong>.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="description">Specific Topics & Questions</label>
+        <textarea 
+          id="description" 
+          name="description" 
+          class="form-control" 
+          rows="4" 
+          placeholder="Describe your current roadblocks, upcoming deadlines, or particular concepts you find tricky." 
+          required
+        ></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; margin-top: 1rem;">
+        Publish Request & Find Peer Mentors
+      </button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

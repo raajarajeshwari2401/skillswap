@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}My Sessions & Exchanges - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <h1>My Sessions & Exchanges</h1>
+      <p>Track your teaching sessions, learning requests, and scheduled peer appointments.</p>
+    </div>
+    <a href="{{ url_for('skills.explore') }}" class="btn btn-primary btn-sm">+ Find New Skills</a>
+  </div>
+
+  <!-- Filter Status Tabs -->
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+    <a href="{{ url_for('exchanges.list_exchanges', tab='all') }}" class="btn btn-sm {% if current_tab == 'all' %}btn-primary{% else %}btn-secondary{% endif %}">All Sessions</a>
+    <a href="{{ url_for('exchanges.list_exchanges', tab='pending') }}" class="btn btn-sm {% if current_tab == 'pending' %}btn-primary{% else %}btn-secondary{% endif %}">Pending Requests</a>
+    <a href="{{ url_for('exchanges.list_exchanges', tab='active') }}" class="btn btn-sm {% if current_tab == 'active' %}btn-primary{% else %}btn-secondary{% endif %}">Active / Scheduled</a>
+    <a href="{{ url_for('exchanges.list_exchanges', tab='completed') }}" class="btn btn-sm {% if current_tab == 'completed' %}btn-primary{% else %}btn-secondary{% endif %}">Completed</a>
+  </div>
+
+  <div class="grid-2">
+    <!-- Incoming Exchanges (User as Teacher) -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Teaching Sessions (As Teacher)</h3>
+        <span class="badge badge-primary">{{ incoming|length }}</span>
+      </div>
+
+      {% if incoming %}
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          {% for ex in incoming %}
+            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <div>
+                  <h4 style="font-size: 1.05rem;">
+                    <a href="{{ url_for('exchanges.detail', exchange_id=ex.id) }}">{{ ex.skill_offer.title }}</a>
+                  </h4>
+                  <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">
+                    Student: <strong>{{ ex.learner.full_name }}</strong> • Value: <strong>{{ ex.points_cost }} pts</strong>
+                  </div>
+                </div>
+                <span class="badge {{ ex.status | badge_class }}">{{ ex.status }}</span>
+              </div>
+
+              {% if ex.scheduled_at %}
+                <div style="font-size: 0.8rem; color: #4338ca; margin-bottom: 0.75rem;">
+                  🗓 Scheduled: {{ ex.scheduled_at.strftime('%a, %b %d at %I:%M %p') }}
+                </div>
+              {% endif %}
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; pt: 0.5rem; border-top: 1px solid #e2e8f0;">
+                <span style="font-size: 0.75rem; color: var(--text-light);">{{ ex.created_at.strftime('%b %d, %Y') }}</span>
+                <a href="{{ url_for('exchanges.detail', exchange_id=ex.id) }}" class="btn btn-outline btn-sm">Manage &rarr;</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="font-size: 0.9rem; color: var(--text-muted); text-align: center; padding: 2rem 0;">No sessions found in this category.</p>
+      {% endif %}
+    </div>
+
+    <!-- Outgoing Exchanges (User as Learner) -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Learning Sessions (As Learner)</h3>
+        <span class="badge badge-info">{{ outgoing|length }}</span>
+      </div>
+
+      {% if outgoing %}
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          {% for ex in outgoing %}
+            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <div>
+                  <h4 style="font-size: 1.05rem;">
+                    <a href="{{ url_for('exchanges.detail', exchange_id=ex.id) }}">{{ ex.skill_offer.title }}</a>
+                  </h4>
+                  <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">
+                    Instructor: <strong>{{ ex.teacher.full_name }}</strong> • Cost: <strong>{{ ex.points_cost }} pts</strong>
+                  </div>
+                </div>
+                <span class="badge {{ ex.status | badge_class }}">{{ ex.status }}</span>
+              </div>
+
+              {% if ex.scheduled_at %}
+                <div style="font-size: 0.8rem; color: #4338ca; margin-bottom: 0.75rem;">
+                  🗓 Scheduled: {{ ex.scheduled_at.strftime('%a, %b %d at %I:%M %p') }}
+                </div>
+              {% endif %}
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; pt: 0.5rem; border-top: 1px solid #e2e8f0;">
+                <span style="font-size: 0.75rem; color: var(--text-light);">{{ ex.created_at.strftime('%b %d, %Y') }}</span>
+                <a href="{{ url_for('exchanges.detail', exchange_id=ex.id) }}" class="btn btn-outline btn-sm">View Session &rarr;</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="font-size: 0.9rem; color: var(--text-muted); text-align: center; padding: 2rem 0;">No learning sessions found in this category.</p>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

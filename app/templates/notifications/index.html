@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; padding-top: 2.5rem; padding-bottom: 4rem;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+      <h1>Notifications & Alerts</h1>
+      <p>Real-time updates delivered over authenticated WebSockets and persisted to database.</p>
+    </div>
+    {% if unread_notifications_count > 0 %}
+      <form method="POST" action="{{ url_for('notifications.mark_all_read') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-outline btn-sm">Mark All as Read</button>
+      </form>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    {% if notifications %}
+      <div style="display: flex; flex-direction: column;">
+        {% for notif in notifications %}
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 0; border-bottom: 1px solid var(--border-color); {% if not notif.is_read %}background-color: #f5f3ff; margin: 0 -1.5rem; padding-left: 1.5rem; padding-right: 1.5rem; border-left: 4px solid var(--primary);{% endif %}">
+            <div style="flex: 1; padding-right: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                <span style="font-weight: 700; font-size: 0.95rem; color: #0f172a;">{{ notif.title }}</span>
+                {% if not notif.is_read %}
+                  <span class="badge badge-primary" style="font-size: 0.65rem;">New</span>
+                {% endif %}
+              </div>
+              <p style="font-size: 0.9rem; color: #475569; margin-bottom: 0.25rem;">{{ notif.message }}</p>
+              <div style="font-size: 0.75rem; color: var(--text-light);">{{ notif.created_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
+            </div>
+
+            {% if notif.link %}
+              <a href="{{ url_for('notifications.mark_read', notification_id=notif.id) }}" class="btn btn-outline btn-sm">
+                View &rarr;
+              </a>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 3rem 0; color: var(--text-muted);">
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔔</div>
+        <h3>No notifications yet</h3>
+        <p style="font-size: 0.9rem;">You will receive alerts here when peers request, accept, or complete sessions.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

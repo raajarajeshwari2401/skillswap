@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}{{ offer.title }} - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+  
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2.5rem;">
+    <!-- Main Skill Information -->
+    <div>
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; align-items: center;">
+        <span class="badge badge-primary">{{ offer.category.name }}</span>
+        <span class="badge {{ offer.proficiency_level | badge_class }}">{{ offer.difficulty }}</span>
+        <span class="badge {{ 'badge-success' if offer.is_active else 'badge-secondary' }}">
+          {{ 'Active' if offer.is_active else 'Paused' }}
+        </span>
+      </div>
+
+      <h1 style="font-size: 2.25rem; margin-bottom: 1.5rem;">{{ offer.title }}</h1>
+
+      <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="margin-bottom: 1rem;">About This Skill Session</h3>
+        <div style="font-size: 1rem; line-height: 1.7; color: #334155; white-space: pre-line;">
+          {{ offer.description }}
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+          <div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Duration</div>
+            <div style="font-weight: 700; font-size: 1.1rem; color: #0f172a;">⏱ {{ offer.duration_minutes }} minutes</div>
+          </div>
+          <div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Interaction Mode</div>
+            <div style="font-weight: 700; font-size: 1.1rem; color: #0f172a;">📍 {{ offer.interaction_mode | capitalize }}</div>
+          </div>
+          <div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Location / Link</div>
+            <div style="font-weight: 600; font-size: 0.95rem; color: #0f172a;">{{ offer.location_details or 'Online / Campus' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SymPy Mathematical Scoring Proof Breakdown -->
+      <div class="card" style="background: #f8fafc; border-left: 4px solid var(--primary); margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h4 style="font-size: 1.05rem;">SymPy Academic Scoring Breakdown</h4>
+          <span class="badge badge-info">Symbolic Math</span>
+        </div>
+        <p style="font-size: 0.85rem; margin-bottom: 1rem;">
+          This session cost was determined on the server using Python's SymPy library according to standard academic formulas:
+        </p>
+
+        <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; font-size: 0.85rem; font-family: monospace;">
+          <div>Formula: (Duration / 30) × 10 × LevelMultiplier + PrepBonus</div>
+          <div style="margin-top: 6px; color: #4338ca;">
+            Calculation: ({{ offer.duration_minutes }}m / 30) × 10 × {{ breakdown.multiplier or '1.5' }} + {{ breakdown.preparation_bonus or '0' }} pts
+            = <strong>{{ offer.suggested_points }} Points</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Similar Offerings -->
+      {% if related_offers %}
+        <div style="margin-top: 2.5rem;">
+          <h3 style="margin-bottom: 1rem;">More {{ offer.category.name }} Skills</h3>
+          <div class="grid-3">
+            {% for rel in related_offers %}
+              <div class="card" style="padding: 1rem;">
+                <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.25rem;">
+                  <a href="{{ url_for('skills.detail', offer_id=rel.id) }}">{{ rel.title }}</a>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                  {{ rel.suggested_points }} pts • {{ rel.proficiency_level | capitalize }}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Right Booking Sidebar & Instructor Profile -->
+    <div>
+      <!-- Booking Action Card -->
+      <div class="card" style="margin-bottom: 2rem; position: sticky; top: 6rem;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.5rem;">
+          <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Cost to Learn</div>
+          <div style="font-size: 2.25rem; font-weight: 900; color: var(--primary);">
+            {{ offer.suggested_points }} <span style="font-size: 1.1rem; font-weight: 600;">pts</span>
+          </div>
+        </div>
+
+        {% if current_user.is_authenticated %}
+          {% if current_user.id == offer.user_id %}
+            <!-- Owner Actions -->
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              <a href="{{ url_for('skills.edit_offer', offer_id=offer.id) }}" class="btn btn-outline" style="width: 100%;">Edit Listing</a>
+              <form method="POST" action="{{ url_for('skills.toggle_offer_status', offer_id=offer.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-secondary" style="width: 100%;">
+                  {{ 'Pause Listing' if offer.is_active else 'Resume Listing' }}
+                </button>
+              </form>
+            </div>
+          {% else %}
+            <!-- Learner Booking Form -->
+            {% if offer.is_active %}
+              <form method="POST" action="{{ url_for('exchanges.create_exchange_request', offer_id=offer.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                  <label class="form-label" for="notes">Learning Goals / Notes for Instructor</label>
+                  <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="What specific topics or exam prep do you need help with?"></textarea>
+                </div>
+
+                <div style="background: #f1f5f9; padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.8rem; margin-bottom: 1.25rem;">
+                  Your available balance: <strong>{{ current_user.wallet.available_balance }} pts</strong>.<br>
+                  Points will only be reserved in escrow once the instructor accepts.
+                </div>
+
+                {% if current_user.wallet.can_afford(offer.suggested_points) %}
+                  <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem;">Request Exchange Session</button>
+                {% else %}
+                  <button type="button" class="btn btn-secondary" style="width: 100%;" disabled>Insufficient Points</button>
+                  <div style="font-size: 0.8rem; color: var(--danger); text-align: center; margin-top: 0.5rem;">
+                    You need {{ offer.suggested_points - current_user.wallet.available_balance }} more points. Teach a skill to earn points!
+                  </div>
+                {% endif %}
+              </form>
+            {% else %}
+              <div class="alert alert-warning">This listing is currently paused by the instructor.</div>
+            {% endif %}
+          {% endif %}
+        {% else %}
+          <div style="text-align: center; padding: 1rem 0;">
+            <p style="font-size: 0.9rem; margin-bottom: 1rem;">Sign in or register to request this session.</p>
+            <a href="{{ url_for('auth.login', next=request.path) }}" class="btn btn-primary" style="width: 100%;">Sign In to Book</a>
+          </div>
+        {% endif %}
+
+        <!-- Instructor Profile Card -->
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.75rem;">Instructor Profile</div>
+          
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: #e0e7ff; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--primary);">
+              {{ offer.user.full_name[:1] }}
+            </div>
+            <div>
+              <div style="font-weight: 700; font-size: 1rem;">
+                <a href="{{ url_for('profile.view_profile', user_id=offer.user_id) }}">{{ offer.user.full_name }}</a>
+              </div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">{{ offer.user.location or 'Campus / Remote' }}</div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 1rem; background: #f8fafc; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);">
+            <span>Rating: <strong style="color: #f59e0b;">⭐ {{ offer.user.get_average_rating() }}</strong></span>
+            <span>Sessions: <strong>{{ offer.user.get_completed_sessions_count() }}</strong></span>
+          </div>
+
+          {% if offer.user.bio %}
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">{{ offer.user.bio[:140] }}...</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

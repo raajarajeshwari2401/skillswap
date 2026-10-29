@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+  
+  <!-- Welcome & Top Action Bar -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <h1 style="font-size: 1.85rem;">Hello, {{ current_user.full_name }} 👋</h1>
+      <p style="font-size: 0.95rem;">Manage your active skill trades, points wallet, and peer mentoring sessions.</p>
+    </div>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <a href="{{ url_for('skills.create_offer') }}" class="btn btn-primary">+ Post Skill Offer</a>
+      <a href="{{ url_for('skills.create_request') }}" class="btn btn-outline">+ Request a Skill</a>
+      <a href="{{ url_for('matching.recommendations') }}" class="btn btn-secondary">Matching AI</a>
+    </div>
+  </div>
+
+  <!-- Wallet & Reputation Card Overview -->
+  <div class="grid-3" style="margin-bottom: 2.5rem;">
+    <!-- Wallet Balance Widget -->
+    <div class="wallet-card">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #c7d2fe;">Available Points</span>
+        <a href="{{ url_for('wallet.overview') }}" style="color: white; font-size: 0.8rem; text-decoration: underline;">Ledger &rarr;</a>
+      </div>
+      <div class="wallet-balance-num">{{ wallet.available_balance }} <span style="font-size: 1.5rem; font-weight: 500;">pts</span></div>
+      <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #e0e7ff; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 0.75rem;">
+        <span>Total: <strong>{{ wallet.balance }}</strong></span>
+        <span>In Escrow: <strong>{{ wallet.reserved_balance }}</strong></span>
+      </div>
+    </div>
+
+    <!-- Student Reputation Widget -->
+    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 0.5rem;">Peer Reputation</div>
+        <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <span style="font-size: 2.75rem; font-weight: 800; color: #f59e0b;">⭐ {{ current_user.get_average_rating() }}</span>
+          <span style="color: var(--text-muted); font-size: 0.9rem;">/ 5.0</span>
+        </div>
+        <p style="font-size: 0.85rem;">Based on <strong>{{ current_user.get_review_count() }}</strong> verified peer session reviews.</p>
+      </div>
+      <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+        <a href="{{ url_for('profile.view_profile', user_id=current_user.id) }}" style="font-size: 0.85rem; font-weight: 600;">View Public Profile &rarr;</a>
+      </div>
+    </div>
+
+    <!-- Active Sessions Count Widget -->
+    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 0.5rem;">Total Exchanges Completed</div>
+        <div style="font-size: 2.75rem; font-weight: 800; color: var(--primary); margin-bottom: 0.5rem;">
+          {{ current_user.get_completed_sessions_count() }}
+        </div>
+        <p style="font-size: 0.85rem;">Sessions taught and attended with classmates.</p>
+      </div>
+      <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+        <a href="{{ url_for('exchanges.list_exchanges') }}" style="font-size: 0.85rem; font-weight: 600;">Manage All Sessions &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Session Requests Grid -->
+  <div class="grid-2" style="margin-bottom: 3rem;">
+    <!-- Incoming Requests (As Teacher) -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Incoming Requests (To Teach)</h3>
+        <span class="badge badge-primary">{{ active_incoming|length }}</span>
+      </div>
+      {% if active_incoming %}
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          {% for ex in active_incoming %}
+            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 700; font-size: 0.95rem;">{{ ex.skill_offer.title }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                  From: <strong>{{ ex.learner.full_name }}</strong> • {{ ex.points_cost }} pts
+                </div>
+                <div style="margin-top: 4px;">
+                  <span class="badge {{ ex.status | badge_class }}">{{ ex.status }}</span>
+                </div>
+              </div>
+              <a href="{{ url_for('exchanges.detail', exchange_id=ex.id) }}" class="btn btn-outline btn-sm">Review &rarr;</a>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="font-size: 0.9rem; padding: 1.5rem 0; text-align: center; color: var(--text-muted);">
+          No pending incoming requests. <a href="{{ url_for('skills.create_offer') }}">Publish a new skill offer</a> to attract learners!
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- Outgoing Requests (As Learner) -->
+    <div class="card">
+      <div class="card-header">
+        <h3>My Learning Requests</h3>
+        <span class="badge badge-info">{{ active_outgoing|length }}</span>
+      </div>
+      {% if active_outgoing %}
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          {% for ex in active_outgoing %}
+            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 700; font-size: 0.95rem;">{{ ex.skill_offer.title }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                  Instructor: <strong>{{ ex.teacher.full_name }}</strong> • {{ ex.points_cost }} pts
+                </div>
+                <div style="margin-top: 4px;">
+                  <span class="badge {{ ex.status | badge_class }}">{{ ex.status }}</span>
+                </div>
+              </div>
+              <a href="{{ url_for('exchanges.detail', exchange_id=ex.id) }}" class="btn btn-outline btn-sm">View &rarr;</a>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="font-size: 0.9rem; padding: 1.5rem 0; text-align: center; color: var(--text-muted);">
+          You haven't requested any sessions yet. <a href="{{ url_for('skills.explore') }}">Explore active listings</a> to get started!
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Listings and Requests -->
+  <div class="grid-2">
+    <!-- My Published Offers -->
+    <div class="card">
+      <div class="card-header">
+        <h3>My Published Skill Offers</h3>
+        <a href="{{ url_for('skills.create_offer') }}" class="btn btn-primary btn-sm">+ New</a>
+      </div>
+      {% if my_offers %}
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          {% for off in my_offers %}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+              <div>
+                <a href="{{ url_for('skills.detail', offer_id=off.id) }}" style="font-weight: 600; font-size: 0.95rem;">{{ off.title }}</a>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                  {{ off.category.name }} • {{ off.suggested_points }} pts • {{ off.duration_minutes }}m
+                </div>
+              </div>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <span class="badge {{ 'badge-success' if off.is_active else 'badge-secondary' }}">
+                  {{ 'Active' if off.is_active else 'Paused' }}
+                </span>
+                <a href="{{ url_for('skills.edit_offer', offer_id=off.id) }}" class="btn btn-outline btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">Edit</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="font-size: 0.85rem; color: var(--text-muted); padding: 1rem 0;">You haven't published any skill offers yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- My Open Skill Requests -->
+    <div class="card">
+      <div class="card-header">
+        <h3>My Open Skill Requests</h3>
+        <a href="{{ url_for('skills.create_request') }}" class="btn btn-outline btn-sm">+ Request</a>
+      </div>
+      {% if my_requests %}
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          {% for req in my_requests %}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+              <div>
+                <div style="font-weight: 600; font-size: 0.95rem;">{{ req.title }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                  Budget: {{ req.budget_points }} pts • Level: {{ req.desired_level | capitalize }}
+                </div>
+              </div>
+              <a href="{{ url_for('matching.recommendations', request_id=req.id) }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem;">
+                Find Matches &rarr;
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="font-size: 0.85rem; color: var(--text-muted); padding: 1rem 0;">No learning requests posted.</p>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

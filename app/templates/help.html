@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Help & Platform Rules - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; padding-top: 2.5rem; padding-bottom: 4rem;">
+  
+  <div style="margin-bottom: 3rem; text-align: center;">
+    <h1>SkillSwap Platform Rules & Community Guidelines</h1>
+    <p>Everything you need to know about points, escrow safety, and student mentoring.</p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 2rem;">
+    <!-- Rule 1: Points System -->
+    <div class="card">
+      <div style="display: flex; gap: 1rem; align-items: flex-start;">
+        <div style="font-size: 2rem;">🪙</div>
+        <div>
+          <h3>1. How the Points Economy Works</h3>
+          <p style="margin: 0.5rem 0 1rem; color: #334155; line-height: 1.6;">
+            SkillSwap is a completely cash-free campus platform. Every new student is welcomed with <strong>50 bonus points</strong> upon registration.
+            Points can only be earned by conducting verified peer sessions or through verified administrative grants.
+          </p>
+          <div style="background: #f8fafc; padding: 1rem; border-radius: var(--radius-md); font-size: 0.85rem; border: 1px solid var(--border-color);">
+            <strong>Rule:</strong> You spend points when you receive instruction, and you earn points when you deliver instruction.
+            Points cannot be arbitrarily awarded or transferred directly without a linked session.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rule 2: SymPy Non-Arbitrary Difficulty Scoring -->
+    <div class="card">
+      <div style="display: flex; gap: 1rem; align-items: flex-start;">
+        <div style="font-size: 2rem;">📐</div>
+        <div>
+          <h3>2. Automatic SymPy Mathematical Difficulty & Points Calculation</h3>
+          <p style="margin: 0.5rem 0 1rem; color: #334155; line-height: 1.6;">
+            Instructors cannot inflate session prices arbitrarily. The platform server evaluates every skill offering using Python's SymPy symbolic math engine:
+          </p>
+          <ul style="list-style-position: inside; color: #475569; font-size: 0.9rem; line-height: 1.8;">
+            <li><strong>Base Rate:</strong> 10 points per 30 minutes of instruction.</li>
+            <li><strong>Beginner Multiplier:</strong> 1.0x (Foundational topics, e.g. Intro Python syntax).</li>
+            <li><strong>Intermediate Multiplier:</strong> 1.5x (Core coursework, e.g. Algorithms or Calculus).</li>
+            <li><strong>Advanced Multiplier:</strong> 2.0x (Complex graduate/research topics, e.g. Compiler Design).</li>
+            <li><strong>Preparation Effort Bonus:</strong> Up to +15 bonus points for intensive session prep.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rule 3: Escrow & State Machine Protection -->
+    <div class="card">
+      <div style="display: flex; gap: 1rem; align-items: flex-start;">
+        <div style="font-size: 2rem;">🔒</div>
+        <div>
+          <h3>3. Escrow Hold and Cancellation Guarantees</h3>
+          <p style="margin: 0.5rem 0 1rem; color: #334155; line-height: 1.6;">
+            When an instructor accepts a session, the required points are placed in <strong>escrow reservation</strong> inside the learner's wallet.
+            The learner cannot double-spend those points on other sessions.
+          </p>
+          <p style="color: #334155; font-size: 0.9rem; line-height: 1.6;">
+            If the session is cancelled before completion, the reservation is released immediately back to the learner's available balance.
+            Points are permanently transferred to the instructor only after completion is confirmed.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rule 4: Campus Safety & Privacy -->
+    <div class="card">
+      <div style="display: flex; gap: 1rem; align-items: flex-start;">
+        <div style="font-size: 2rem;">🛡️</div>
+        <div>
+          <h3>4. Campus Safety & Privacy Rules</h3>
+          <ul style="list-style-position: inside; color: #475569; font-size: 0.9rem; line-height: 1.8;">
+            <li>Always meet in public campus areas (e.g. library quiet rooms, student centers, campus cafes) or via verified video links.</li>
+            <li>Never publish private home addresses or personal phone numbers in public skill descriptions.</li>
+            <li>If an exchange encounters any violation, click the <em>Report Dispute</em> button on the session page for administrator intervention.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

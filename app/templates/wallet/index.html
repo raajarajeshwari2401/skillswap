@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Points Wallet & Ledger - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px; padding-top: 2.5rem; padding-bottom: 4rem;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <h1>Points Wallet & Ledger</h1>
+      <p>Persistent double-entry balance and immutable transaction accounting.</p>
+    </div>
+    <a href="{{ url_for('skills.create_offer') }}" class="btn btn-primary btn-sm">+ Teach to Earn Points</a>
+  </div>
+
+  <!-- Wallet Header Card -->
+  <div class="wallet-card" style="margin-bottom: 2.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem; color: #c7d2fe;">Available Spending Power</span>
+      <span class="badge badge-success">Verified Active</span>
+    </div>
+
+    <div class="wallet-balance-num">
+      {{ wallet.available_balance }} <span style="font-size: 1.5rem; font-weight: 500;">pts</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 1.25rem;">
+      <div>
+        <div style="font-size: 0.8rem; color: #c7d2fe;">Total Account Balance</div>
+        <div style="font-size: 1.4rem; font-weight: 700;">{{ wallet.balance }} pts</div>
+      </div>
+      <div>
+        <div style="font-size: 0.8rem; color: #c7d2fe;">Locked in Escrow (Ongoing Sessions)</div>
+        <div style="font-size: 1.4rem; font-weight: 700; color: #fde047;">{{ wallet.reserved_balance }} pts</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ledger Section -->
+  <div class="card">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+      <h3>Transaction Audit Ledger</h3>
+      
+      <!-- Filter Links -->
+      <div style="display: flex; gap: 0.5rem; font-size: 0.85rem;">
+        <a href="{{ url_for('wallet.overview', type='all') }}" class="btn btn-sm {% if current_filter == 'all' %}btn-primary{% else %}btn-secondary{% endif %}">All</a>
+        <a href="{{ url_for('wallet.overview', type='earnings') }}" class="btn btn-sm {% if current_filter == 'earnings' %}btn-primary{% else %}btn-secondary{% endif %}">Earnings</a>
+        <a href="{{ url_for('wallet.overview', type='payments') }}" class="btn btn-sm {% if current_filter == 'payments' %}btn-primary{% else %}btn-secondary{% endif %}">Payments</a>
+        <a href="{{ url_for('wallet.overview', type='escrow') }}" class="btn btn-sm {% if current_filter == 'escrow' %}btn-primary{% else %}btn-secondary{% endif %}">Escrow</a>
+        <a href="{{ url_for('wallet.overview', type='bonuses') }}" class="btn btn-sm {% if current_filter == 'bonuses' %}btn-primary{% else %}btn-secondary{% endif %}">Bonuses</a>
+      </div>
+    </div>
+
+    {% if transactions %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date / Time</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Balance After</th>
+              <th>Session</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tx in transactions %}
+              <tr>
+                <td style="font-size: 0.85rem; color: var(--text-muted);">
+                  {{ tx.created_at.strftime('%b %d, %Y %H:%M') }}
+                </td>
+                <td>
+                  <span class="badge 
+                    {% if tx.amount > 0 %}badge-success
+                    {% elif tx.amount < 0 %}badge-danger
+                    {% else %}badge-info{% endif %}">
+                    {{ tx.transaction_type | replace('_', ' ') }}
+                  </span>
+                </td>
+                <td style="font-size: 0.9rem; font-weight: 500;">
+                  {{ tx.description }}
+                </td>
+                <td style="font-weight: 700; font-size: 0.95rem; {% if tx.amount > 0 %}color: var(--success);{% elif tx.amount < 0 %}color: var(--danger);{% else %}color: var(--text-muted);{% endif %}">
+                  {% if tx.amount > 0 %}+{{ tx.amount }} pts
+                  {% elif tx.amount < 0 %}{{ tx.amount }} pts
+                  {% else %}0.0 (Escrow)
+                  {% endif %}
+                </td>
+                <td style="font-size: 0.9rem; font-weight: 600;">
+                  {{ tx.balance_after }} pts
+                </td>
+                <td>
+                  {% if tx.exchange_id %}
+                    <a href="{{ url_for('exchanges.detail', exchange_id=tx.exchange_id) }}" class="btn btn-outline btn-sm" style="padding: 0.15rem 0.5rem; font-size: 0.75rem;">
+                      #{{ tx.exchange_id }}
+                    </a>
+                  {% else %}
+                    <span style="color: var(--text-light);">-</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="padding: 2.5rem 0; text-align: center; color: var(--text-muted);">No transactions match this filter.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Exchange #{{ exchange.id }} - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; padding-top: 2.5rem; padding-bottom: 4rem;">
+  
+  <!-- Header Bar -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <div style="font-size: 0.85rem; color: var(--text-muted);">Exchange Session #{{ exchange.id }}</div>
+      <h1 style="font-size: 1.85rem; margin-top: 0.25rem;">{{ exchange.skill_offer.title }}</h1>
+    </div>
+    <div>
+      <span class="badge {{ exchange.status | badge_class }}" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+        {{ exchange.status | upper }}
+      </span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <!-- Main Lifecycle Content -->
+    <div>
+      <!-- Exchange Details Card -->
+      <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="margin-bottom: 1.25rem;">Session Details</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
+          <div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Instructor (Teacher)</div>
+            <div style="font-weight: 700; font-size: 1rem; margin-top: 2px;">
+              <a href="{{ url_for('profile.view_profile', user_id=exchange.teacher_id) }}">{{ exchange.teacher.full_name }}</a>
+              {% if is_teacher %}<span class="badge badge-info" style="font-size: 0.65rem;">(You)</span>{% endif %}
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Student (Learner)</div>
+            <div style="font-weight: 700; font-size: 1rem; margin-top: 2px;">
+              <a href="{{ url_for('profile.view_profile', user_id=exchange.learner_id) }}">{{ exchange.learner.full_name }}</a>
+              {% if is_learner %}<span class="badge badge-info" style="font-size: 0.65rem;">(You)</span>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        {% if exchange.request_notes %}
+          <div style="background: #f8fafc; border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+            <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem;">Learner Goals & Notes</div>
+            <p style="font-size: 0.9rem; color: #334155;">{{ exchange.request_notes }}</p>
+          </div>
+        {% endif %}
+
+        <!-- Meeting Schedule & Coordinates -->
+        <div style="border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+          <h4 style="font-size: 1rem; margin-bottom: 0.75rem;">Meeting Schedule & Venue</h4>
+          {% if exchange.scheduled_at %}
+            <p style="font-size: 0.95rem; color: #1e1b4b; margin-bottom: 0.5rem;">
+              🗓 <strong>{{ exchange.scheduled_at.strftime('%A, %B %d, %Y at %I:%M %p') }}</strong>
+            </p>
+          {% else %}
+            <p style="font-size: 0.85rem; color: var(--warning); margin-bottom: 0.5rem;">⚠️ No confirmed meeting date yet.</p>
+          {% endif %}
+
+          {% if exchange.meeting_location %}
+            <p style="font-size: 0.9rem; color: #334155;">📍 <strong>Location / Link:</strong> {{ exchange.meeting_location }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Action Forms According to State Machine -->
+      <div class="card">
+        <h3 style="margin-bottom: 1.25rem;">Exchange Actions</h3>
+
+        <!-- PENDING State Actions -->
+        {% if exchange.status == 'pending' %}
+          {% if is_teacher %}
+            <p style="font-size: 0.9rem; margin-bottom: 1.25rem;">
+              {{ exchange.learner.full_name }} wants to learn from you. Accept to reserve {{ exchange.points_cost }} points in escrow.
+            </p>
+            <div style="display: flex; gap: 1rem;">
+              <form method="POST" action="{{ url_for('exchanges.accept', exchange_id=exchange.id) }}" style="flex: 1;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Accept Request & Lock Escrow</button>
+              </form>
+              <form method="POST" action="{{ url_for('exchanges.reject', exchange_id=exchange.id) }}" style="flex: 1;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-secondary" style="width: 100%;">Decline</button>
+              </form>
+            </div>
+          {% else %}
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+              Waiting for instructor {{ exchange.teacher.full_name }} to accept your request.
+            </p>
+            <form method="POST" action="{{ url_for('exchanges.cancel', exchange_id=exchange.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="reason" value="Cancelled by learner prior to acceptance">
+              <button type="submit" class="btn btn-outline btn-sm">Cancel Request</button>
+            </form>
+          {% endif %}
+
+        <!-- ACCEPTED or SCHEDULED State Actions -->
+        {% elif exchange.status in ['accepted', 'scheduled'] %}
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Schedule / Reschedule Form -->
+            <form method="POST" action="{{ url_for('exchanges.schedule', exchange_id=exchange.id) }}" style="background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <h4 style="font-size: 0.95rem; margin-bottom: 1rem;">Set / Update Meeting Coordinates</h4>
+              
+              <div class="grid-2">
+                <div class="form-group">
+                  <label class="form-label" for="scheduled_at">Date & Time</label>
+                  <input type="datetime-local" id="scheduled_at" name="scheduled_at" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="meeting_location">Link or Campus Room</label>
+                  <input type="text" id="meeting_location" name="meeting_location" class="form-control" placeholder="Zoom URL or Library Room 3A" value="{{ exchange.meeting_location or '' }}" required>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-outline btn-sm">Update Meeting Details</button>
+            </form>
+
+            <!-- Complete Session Trigger -->
+            <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: var(--radius-md); padding: 1.25rem;">
+              <h4 style="color: #065f46; font-size: 1rem; margin-bottom: 0.5rem;">Session Completed?</h4>
+              <p style="font-size: 0.85rem; color: #047857; margin-bottom: 1rem;">
+                Confirm that the mentoring session took place. Once confirmed, points will automatically transfer from escrow to the instructor's wallet.
+              </p>
+              <form method="POST" action="{{ url_for('exchanges.complete_session', exchange_id=exchange.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-success">
+                  Confirm Session Completion & Settle {{ exchange.points_cost }} pts
+                </button>
+              </form>
+            </div>
+
+            <!-- Cancellation -->
+            <div>
+              <form method="POST" action="{{ url_for('exchanges.cancel', exchange_id=exchange.id) }}" style="display: flex; gap: 0.5rem;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="text" name="reason" class="form-control" placeholder="Reason for cancellation" style="flex: 1;" required>
+                <button type="submit" class="btn btn-danger btn-sm">Cancel Session & Refund Escrow</button>
+              </form>
+            </div>
+          </div>
+
+        <!-- COMPLETED State Actions -->
+        {% elif exchange.status == 'completed' %}
+          <div style="background: #ecfdf5; border-radius: var(--radius-md); padding: 1.25rem; border: 1px solid #a7f3d0; margin-bottom: 1.5rem;">
+            <div style="font-weight: 700; color: #065f46; margin-bottom: 0.25rem;">✓ Session Successfully Completed & Settled</div>
+            <div style="font-size: 0.85rem; color: #047857;">
+              {{ exchange.points_cost }} points were transferred to {{ exchange.teacher.full_name }}.
+            </div>
+          </div>
+
+          {% if not has_reviewed %}
+            <a href="{{ url_for('reviews.create_review', exchange_id=exchange.id) }}" class="btn btn-primary">
+              ⭐ Write a Review for {{ exchange.teacher.full_name if is_learner else exchange.learner.full_name }}
+            </a>
+          {% else %}
+            <div style="font-size: 0.85rem; color: var(--text-muted);">You have already submitted a verified review for this exchange.</div>
+          {% endif %}
+
+        <!-- CANCELLED or REJECTED or DISPUTED -->
+        {% else %}
+          <div style="background: #f1f5f9; padding: 1.25rem; border-radius: var(--radius-md); font-size: 0.9rem; color: var(--text-muted);">
+            This session is marked as <strong>{{ exchange.status }}</strong>.
+            {% if exchange.cancellation_reason %}
+              <div style="margin-top: 0.5rem; font-size: 0.85rem;">Reason: {{ exchange.cancellation_reason }}</div>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Escrow Ledger Card -->
+    <div>
+      <div class="card" style="background: #f8fafc; border: 1px solid var(--border-color);">
+        <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">Transaction Status</div>
+        
+        <div style="font-size: 2.25rem; font-weight: 900; color: var(--primary); margin-bottom: 0.5rem;">
+          {{ exchange.points_cost }} pts
+        </div>
+
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+          {% if exchange.is_settled %}
+            <span class="badge badge-success">Settled Exactly-Once</span>
+          {% elif exchange.status in ['accepted', 'scheduled'] %}
+            <span class="badge badge-info">Escrow Reserved</span>
+          {% else %}
+            <span class="badge badge-secondary">Pending Escrow</span>
+          {% endif %}
+        </div>
+
+        <div style="font-size: 0.8rem; line-height: 1.6; color: #475569; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+          <div>• Dual verification required</div>
+          <div>• Zero duplicate settlement risk</div>
+          <div>• ACID transaction protected</div>
+        </div>
+
+        <!-- Dispute Link -->
+        {% if exchange.status in ['accepted', 'scheduled', 'completed'] %}
+          <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <button onclick="document.getElementById('dispute-box').style.display = 'block'" class="btn btn-outline btn-sm" style="width: 100%; font-size: 0.75rem; color: var(--danger);">
+              Report Dispute / Issue
+            </button>
+
+            <div id="dispute-box" style="display: none; margin-top: 1rem;">
+              <form method="POST" action="{{ url_for('exchanges.dispute', exchange_id=exchange.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="text" name="reason" class="form-control" placeholder="Short issue summary" required style="margin-bottom: 0.5rem; font-size: 0.8rem;">
+                <textarea name="details" class="form-control" rows="2" placeholder="Describe the dispute details..." required style="margin-bottom: 0.5rem; font-size: 0.8rem;"></textarea>
+                <button type="submit" class="btn btn-danger btn-sm" style="width: 100%;">Submit Dispute</button>
+              </form>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

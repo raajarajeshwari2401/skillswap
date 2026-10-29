@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 440px; margin: 4rem auto;">
+  <div class="card" style="padding: 2.5rem;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div class="brand-icon" style="margin: 0 auto 1rem; width: 44px; height: 44px; font-size: 1.25rem;">⚡</div>
+      <h2>Welcome Back</h2>
+      <p style="font-size: 0.9rem;">Sign in to continue sharing skills and managing points.</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-group">
+        <label class="form-label" for="email">Student Email Address</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="name@college.edu" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+          <label class="form-label" for="password" style="margin-bottom: 0;">Password</label>
+        </div>
+        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+      </div>
+
+      <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+        <input type="checkbox" id="remember" name="remember" style="accent-color: var(--primary);">
+        <label for="remember" style="font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">Remember me on this browser</label>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;">Sign In</button>
+    </form>
+
+    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.85rem;">
+      Don't have an account yet? <a href="{{ url_for('auth.register') }}" style="font-weight: 600;">Sign up with 50 bonus points</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

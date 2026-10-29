@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Explore Skills - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+  
+  <!-- Search & Filter Banner -->
+  <div class="card" style="margin-bottom: 2.5rem; background: #ffffff; padding: 1.5rem 2rem;">
+    <form method="GET" action="{{ url_for('skills.explore') }}" style="display: flex; flex-direction: column; gap: 1rem;">
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <input 
+          type="text" 
+          name="q" 
+          value="{{ search_query }}" 
+          class="form-control" 
+          placeholder="Search skills, topics, or software (e.g. Python, Calculus, Guitar, Figma)..." 
+          style="flex: 2; min-width: 250px;"
+        >
+        <button type="submit" class="btn btn-primary" style="padding: 0 1.5rem;">Search</button>
+        {% if search_query or current_category or current_level or current_mode %}
+          <a href="{{ url_for('skills.explore') }}" class="btn btn-secondary">Clear Filters</a>
+        {% endif %}
+      </div>
+
+      <!-- Filter Controls Row -->
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; padding-top: 0.75rem; border-top: 1px solid var(--border-color); font-size: 0.9rem;">
+        <div>
+          <label style="font-weight: 600; margin-right: 0.4rem; color: #475569;">Category:</label>
+          <select name="category" onchange="this.form.submit()" class="form-control" style="width: auto; display: inline-block; padding: 0.35rem 0.75rem;">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+              <option value="{{ cat.id }}" {% if current_category == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="font-weight: 600; margin-right: 0.4rem; color: #475569;">Level:</label>
+          <select name="level" onchange="this.form.submit()" class="form-control" style="width: auto; display: inline-block; padding: 0.35rem 0.75rem;">
+            <option value="">All Levels</option>
+            <option value="beginner" {% if current_level == 'beginner' %}selected{% endif %}>Beginner</option>
+            <option value="intermediate" {% if current_level == 'intermediate' %}selected{% endif %}>Intermediate</option>
+            <option value="advanced" {% if current_level == 'advanced' %}selected{% endif %}>Advanced</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-weight: 600; margin-right: 0.4rem; color: #475569;">Mode:</label>
+          <select name="mode" onchange="this.form.submit()" class="form-control" style="width: auto; display: inline-block; padding: 0.35rem 0.75rem;">
+            <option value="">Any Mode</option>
+            <option value="online" {% if current_mode == 'online' %}selected{% endif %}>Online</option>
+            <option value="offline" {% if current_mode == 'offline' %}selected{% endif %}>In-Person (Campus)</option>
+            <option value="hybrid" {% if current_mode == 'hybrid' %}selected{% endif %}>Hybrid</option>
+          </select>
+        </div>
+
+        <div style="margin-left: auto;">
+          <label style="font-weight: 600; margin-right: 0.4rem; color: #475569;">Sort by:</label>
+          <select name="sort" onchange="this.form.submit()" class="form-control" style="width: auto; display: inline-block; padding: 0.35rem 0.75rem;">
+            <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest</option>
+            <option value="points_asc" {% if current_sort == 'points_asc' %}selected{% endif %}>Points (Lowest First)</option>
+            <option value="points_desc" {% if current_sort == 'points_desc' %}selected{% endif %}>Points (Highest First)</option>
+            <option value="duration" {% if current_sort == 'duration' %}selected{% endif %}>Duration (Shortest First)</option>
+          </select>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Listings Layout -->
+  <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 2rem;">
+    <!-- Active Offers Column -->
+    <div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2>Available Skills ({{ offers|length }})</h2>
+        <a href="{{ url_for('skills.create_offer') }}" class="btn btn-primary btn-sm">+ Share a Skill</a>
+      </div>
+
+      {% if offers %}
+        <div class="grid-2">
+          {% for offer in offers %}
+            <div class="card" style="display: flex; flex-direction: column;">
+              <div class="card-header">
+                <span class="badge badge-primary">{{ offer.category.name }}</span>
+                <span class="badge {{ offer.proficiency_level | badge_class }}">{{ offer.difficulty }}</span>
+              </div>
+              <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">
+                <a href="{{ url_for('skills.detail', offer_id=offer.id) }}">{{ offer.title }}</a>
+              </h3>
+              <p style="font-size: 0.85rem; flex: 1; margin-bottom: 1rem; color: var(--text-muted);">
+                {{ offer.description[:110] }}{% if offer.description|length > 110 %}...{% endif %}
+              </p>
+
+              <!-- Instructor Info -->
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.85rem;">
+                <span>👤</span>
+                <a href="{{ url_for('profile.view_profile', user_id=offer.user_id) }}" style="font-weight: 600; color: #334155;">
+                  {{ offer.user.full_name }}
+                </a>
+                <span style="color: #f59e0b; margin-left: auto;">⭐ {{ offer.user.get_average_rating() }}</span>
+              </div>
+
+              <div style="display: flex; gap: 0.5rem; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+                <span>⏱ {{ offer.duration_minutes }}m</span>
+                <span>•</span>
+                <span>📍 {{ offer.interaction_mode | capitalize }}</span>
+              </div>
+
+              <div class="card-footer">
+                <div>
+                  <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">SymPy Calculated</div>
+                  <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">{{ offer.suggested_points }} pts</div>
+                </div>
+                <a href="{{ url_for('skills.detail', offer_id=offer.id) }}" class="btn btn-outline btn-sm">Details &rarr;</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card" style="text-align: center; padding: 3rem;">
+          <h3>No matching skills found</h3>
+          <p style="margin: 0.5rem 0 1.5rem;">Try adjusting your search criteria or clear active filters.</p>
+          <a href="{{ url_for('skills.explore') }}" class="btn btn-secondary">Reset Filters</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar: Peer Skill Requests -->
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <h4 style="font-size: 1rem;">Students Requesting Skills</h4>
+        </div>
+        <p style="font-size: 0.8rem; margin-bottom: 1rem;">Know one of these topics? Reach out or publish an offer to teach them!</p>
+
+        {% if recent_requests %}
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for req in recent_requests %}
+              <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                <div style="font-weight: 600; font-size: 0.9rem;">{{ req.title }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin: 2px 0 6px;">
+                  By {{ req.user.full_name }} • Budget: <strong style="color: var(--primary);">{{ req.budget_points }} pts</strong>
+                </div>
+                <span class="badge badge-secondary" style="font-size: 0.7rem;">{{ req.desired_level | capitalize }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="font-size: 0.85rem; color: var(--text-muted);">No open requests at the moment.</p>
+        {% endif %}
+
+        <div style="margin-top: 1.5rem;">
+          <a href="{{ url_for('skills.create_request') }}" class="btn btn-outline btn-sm" style="width: 100%;">+ Post a Request</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

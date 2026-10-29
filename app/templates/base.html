@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}SkillSwap - College Skill Exchange Platform{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="{{ url_for('main.index') }}" class="brand-logo">
+        <div class="brand-icon">⚡</div>
+        <span>Skill<span style="color: var(--primary);">Swap</span></span>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('skills.explore') }}" class="nav-link">Explore Skills</a></li>
+          {% if current_user.is_authenticated %}
+            <li><a href="{{ url_for('matching.recommendations') }}" class="nav-link">Matching AI</a></li>
+            <li><a href="{{ url_for('exchanges.list_exchanges') }}" class="nav-link">My Sessions</a></li>
+          {% endif %}
+          <li><a href="{{ url_for('main.help_center') }}" class="nav-link">How It Works</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        {% if current_user.is_authenticated %}
+          <!-- Wallet Balance Pill -->
+          <a href="{{ url_for('wallet.overview') }}" class="badge badge-primary" style="padding: 0.45rem 0.85rem; font-size: 0.85rem; text-decoration: none;">
+            🪙 {{ current_user.wallet.available_balance }} pts
+          </a>
+
+          <!-- Notifications Bell -->
+          <a href="{{ url_for('notifications.center') }}" style="position: relative; padding: 0.4rem; color: var(--text-main);" title="Notifications">
+            🔔
+            <span id="nav-unread-badge" class="badge badge-danger" style="position: absolute; top: -5px; right: -8px; font-size: 0.7rem; padding: 2px 6px; display: {% if unread_notifications_count > 0 %}inline-flex{% else %}none{% endif %};">
+              {{ unread_notifications_count }}
+            </span>
+          </a>
+
+          <!-- User Menu -->
+          <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline btn-sm">Dashboard</a>
+          {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.dashboard') }}" class="badge badge-warning" style="text-decoration: none;">Admin</a>
+          {% endif %}
+          <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-sm">Logout</a>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-sm">Log In</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Get Started</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- Flash Messages -->
+  <div class="container alert-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Page Content -->
+  <main style="flex: 1;">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div>
+        <div class="brand-logo" style="font-size: 1.15rem; margin-bottom: 0.5rem;">
+          <div class="brand-icon" style="width: 28px; height: 28px; font-size: 0.85rem;">⚡</div>
+          <span>SkillSwap</span>
+        </div>
+        <p style="font-size: 0.85rem;">Peer-to-peer college skill exchange platform powered by transparent Python scoring.</p>
+      </div>
+      <div style="display: flex; gap: 2rem; font-size: 0.85rem;">
+        <div>
+          <strong>Platform</strong>
+          <ul style="list-style: none; margin-top: 0.5rem;">
+            <li><a href="{{ url_for('skills.explore') }}">Browse Skills</a></li>
+            <li><a href="{{ url_for('main.help_center') }}">Rules & Points</a></li>
+            <li><a href="{{ url_for('auth.register') }}">Join Network</a></li>
+          </ul>
+        </div>
+        <div>
+          <strong>Architecture</strong>
+          <ul style="list-style: none; margin-top: 0.5rem;">
+            <li><span class="badge badge-info">Python Flask</span></li>
+            <li><span class="badge badge-secondary">SymPy Scoring</span></li>
+            <li><span class="badge badge-success">PostgreSQL</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="container" style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.8rem; color: var(--text-light);">
+      &copy; 2026 SkillSwap Network. Fully functional Python web application.
+    </div>
+  </footer>
+
+  <!-- Socket.IO & Main Client Scripts -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

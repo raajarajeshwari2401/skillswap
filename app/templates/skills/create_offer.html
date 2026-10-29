@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Skill Offer' if is_edit else 'Publish a Skill Offer' }} - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; padding-top: 2.5rem; padding-bottom: 4rem;">
+  
+  <div style="margin-bottom: 2rem;">
+    <h1>{{ 'Edit Skill Offer' if is_edit else 'Share Your Knowledge' }}</h1>
+    <p>Offer a skill session to fellow students. Our automated SymPy scoring model calculates points fairly.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <!-- Offer Form -->
+    <div class="card">
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+          <label class="form-label" for="title">Skill Title</label>
+          <input 
+            type="text" 
+            id="title" 
+            name="title" 
+            class="form-control" 
+            placeholder="e.g. Linear Algebra Exam Prep & Matrix Proofs" 
+            value="{{ offer.title if is_edit else '' }}" 
+            required
+          >
+          <div class="form-hint">Be specific about what you will teach.</div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="category_id">Academic Category</label>
+            <select id="category_id" name="category_id" class="form-control" required>
+              {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if is_edit and offer.category_id == cat.id %}selected{% endif %}>
+                  {{ cat.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="proficiency_level">Proficiency Tier</label>
+            <select id="proficiency_level" name="proficiency_level" class="form-control" required>
+              <option value="beginner" {% if is_edit and offer.proficiency_level == 'beginner' %}selected{% endif %}>Beginner (1.0x multiplier)</option>
+              <option value="intermediate" {% if (is_edit and offer.proficiency_level == 'intermediate') or not is_edit %}selected{% endif %}>Intermediate (1.5x multiplier)</option>
+              <option value="advanced" {% if is_edit and offer.proficiency_level == 'advanced' %}selected{% endif %}>Advanced (2.0x multiplier)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="duration_minutes">Estimated Duration (Minutes)</label>
+            <input 
+              type="number" 
+              id="duration_minutes" 
+              name="duration_minutes" 
+              class="form-control" 
+              min="15" 
+              max="240" 
+              step="15" 
+              value="{{ offer.duration_minutes if is_edit else 60 }}" 
+              required
+            >
+            <div class="form-hint">Standard interval: 30 to 90 minutes.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="preparation_effort">Preparation Effort Required</label>
+            <select id="preparation_effort" name="preparation_effort" class="form-control">
+              <option value="1" {% if is_edit and offer.preparation_effort == 1 %}selected{% endif %}>1: Low (Standard review)</option>
+              <option value="2" {% if is_edit and offer.preparation_effort == 2 %}selected{% endif %}>2: Medium (+5 bonus pts)</option>
+              <option value="3" {% if is_edit and offer.preparation_effort == 3 %}selected{% endif %}>3: High (+10 bonus pts)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="interaction_mode">Interaction Mode</label>
+            <select id="interaction_mode" name="interaction_mode" class="form-control" required>
+              <option value="hybrid" {% if is_edit and offer.interaction_mode == 'hybrid' %}selected{% endif %}>Hybrid (Online or Campus)</option>
+              <option value="online" {% if is_edit and offer.interaction_mode == 'online' %}selected{% endif %}>Online Only (Google Meet / Zoom)</option>
+              <option value="offline" {% if is_edit and offer.interaction_mode == 'offline' %}selected{% endif %}>In-Person (Campus Library / Study Rooms)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="location_details">Location / Link Notes</label>
+            <input 
+              type="text" 
+              id="location_details" 
+              name="location_details" 
+              class="form-control" 
+              placeholder="e.g. Science Library 2nd Floor or Zoom" 
+              value="{{ offer.location_details if is_edit else '' }}"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">Detailed Description & Syllabus</label>
+          <textarea 
+            id="description" 
+            name="description" 
+            class="form-control" 
+            rows="5" 
+            placeholder="Outline topics covered, prerequisites, what the student will achieve, and any software needed." 
+            required
+          >{{ offer.description if is_edit else '' }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; margin-top: 1rem;">
+          {{ 'Save Changes' if is_edit else 'Publish Skill Offer' }}
+        </button>
+      </form>
+    </div>
+
+    <!-- Live SymPy Point Calculator Preview Sidebar -->
+    <div>
+      <div class="card" style="position: sticky; top: 6rem; background: #f8fafc; border: 2px dashed #c7d2fe;">
+        <div style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: var(--primary); letter-spacing: 0.5px; margin-bottom: 0.5rem;">
+          Live SymPy Point Calculation
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          Points are automatically computed based on duration, cognitive difficulty, and preparation effort.
+        </p>
+
+        <div style="background: white; border-radius: var(--radius-md); padding: 1.25rem; border: 1px solid var(--border-color); text-align: center; margin-bottom: 1.25rem;">
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Calculated Value</div>
+          <div id="preview-points-val" style="font-size: 2.75rem; font-weight: 900; color: var(--primary); line-height: 1.1; margin: 0.25rem 0;">
+            {{ offer.suggested_points if is_edit else '30.0' }} pts
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <span id="preview-difficulty-val" class="badge badge-level-intermediate">
+              {{ offer.difficulty if is_edit else 'Intermediate' }}
+            </span>
+          </div>
+        </div>
+
+        <div id="preview-formula-breakdown" style="font-size: 0.8rem; color: #475569; background: #eef2ff; border-radius: var(--radius-sm); padding: 0.75rem; border: 1px solid #c7d2fe;">
+          <strong>Breakdown:</strong> Loading SymPy engine...
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
