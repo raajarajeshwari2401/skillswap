@@ -83,8 +83,12 @@ def create_app(config_name: str = "default") -> Flask:
     flask_app.register_blueprint(reviews_bp)
     flask_app.register_blueprint(admin_bp)
 
-    # Register Socket.IO event listeners
+        # Register Socket.IO event listeners
     from app.sockets import events  # noqa
+
+    # Initialize database tables
+    with flask_app.app_context():
+        db.create_all()
 
     # Error pages
     @flask_app.errorhandler(404)
