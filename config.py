@@ -9,15 +9,19 @@ load_dotenv(BASE_DIR / ".env")
 class Config:
     """Base configuration with robust defaults."""
     SECRET_KEY = os.environ.get("SECRET_KEY", "skillswap-dev-secret-key-3806e501")
-    
     # Database config: defaults to local SQLite for frictionless local dev,
     # overrides with PostgreSQL DATABASE_URL in cloud/production.
     db_url = os.environ.get("DATABASE_URL")
     if db_url and db_url.startswith("postgres://"):
         # Fix legacy Heroku/Render dialect scheme
         db_url = db_url.replace("postgres://", "postgresql://", 1)
+
     SQLALCHEMY_DATABASE_URI = db_url or f"sqlite:///{BASE_DIR / 'skillswap.db'}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
 
     # Security & Session Settings
     SESSION_COOKIE_HTTPONLY = True
