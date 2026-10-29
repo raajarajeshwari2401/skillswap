@@ -66,5 +66,5 @@ config_by_name = {
     "development": DevelopmentConfig,
     "testing": TestingConfig,
     "production": ProductionConfig,
-    "default": DevelopmentConfig,
+    "default": ProductionConfig,
 }
